@@ -123,17 +123,6 @@ X_train = X_train.reshape(X_train.shape[0], num_pixels).astype('float32')
 X_test  = X_test.reshape(X_test.shape[0], num_pixels).astype('float32')
 
 ###########################################
-# --- Reshape to be [sample][channel][width][height] 
-###########################################
-# TODO: this is a temp solution, the added one needs to removed, because the first item in the array is fake and needs to be removed 
-# X_train_gray = X_train_gray.reshape(X_training_sample_size +1, 1, 32, 32) 
-# X_test_gray  = X_test_gray.reshape(X_training_sample_size/5 +1, 1 , 32, 32)
-"""
-num_pixels = 32*32 
-X_train_gray = X_train_gray.reshape(training_sample_size +1, num_pixels).astype('float32')
-X_test_gray  = X_test_gray.reshape(training_sample_size/5 +1, num_pixels).astype('float32')
-"""
-###########################################
 # --- Normalization --- 
 ###########################################
 
@@ -147,17 +136,6 @@ X_test  = X_test/255
 y_train     = np_utils.to_categorical(y_train)
 y_test      = np_utils.to_categorical(y_test) 
 num_classes = y_test.shape[1]
-"""
-# num_pixels  = X_train_gray.shape[2]*X_train_gray.shape[3]
-###########################################
-# --- DEBUG --- 
-print('classes count = {}'.format(num_classes)) 
-print('Pixels count = {}'.format(num_pixels))
-###########################################
-timer.EndTime()
-timer.DeltaTime() 
-print('Log: end input manipulation')
-"""
 
 ###########################################
 # --- Define baseline model ---
