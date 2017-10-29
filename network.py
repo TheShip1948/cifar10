@@ -55,57 +55,10 @@ seed = 7
 numpy.random.seed(seed)
 print('Log: end seed definition')
 
-
-###########################################
-# --- Convert color images into gray ones --- 
-###########################################
-"""
-print('Log: start training images conversion')
-timer.StartTime()
-X_train_gray = numpy.ndarray(shape=(32, 32))
-# for imageIndex in range(0, X_train.shape[0]): 
-# TODO: handling the dimension of the numpy array is pretty bad, find a better solution 
-# TODO: numpy create an initial record, I need to remove it 
-# TODO: modify the sample size to 10000
-X_training_sample_size = 10
-for imageIndex in range(0, X_training_sample_size): 
-	img = Image.fromarray(X_train[imageIndex])
-	img = img.convert('1')
-	X_train_gray = numpy.dstack([X_train_gray, img])
-	print("Log: training image number = {}".format(imageIndex))
-X_train_gray = numpy.swapaxes(X_train_gray, 1, 2)
-X_train_gray = numpy.swapaxes(X_train_gray, 0, 1)
-timer.EndTime()
-timer.DeltaTime() 
-print('Log: end training image conversion') 
-
-print('Log: start testing image conversion')
-timer.StartTime()
-X_test_gray = numpy.ndarray(shape=(32, 32))
-#for imageIndex in range(0, X_test.shape[0]):
-# TODO: apply training modifications here
-# TODO: code is similar may need to put in a function 
-# TODO: the function may be generic enough to put outside the code 
-# TODO: think of a library of utilities to be on git-hub   
-for imageIndex in range(0, X_training_sample_size/5): 
-	img = Image.fromarray(X_test[imageIndex])
-	img = img.convert('1')
-	X_test_gray = numpy.dstack([X_test_gray, img])
-	print("Log: testing image number = {}".format(imageIndex))
-X_test_gray = numpy.swapaxes(X_test_gray, 1, 2)	
-X_test_gray = numpy.swapaxes(X_test_gray, 0, 1)
-timer.EndTime()     
-timer.DeltaTime()
-print('Log: end testing image conversion')
-
-print('Log: start input manipulation')
-timer.StartTime()
-
-print('Log: X_test_gray = {}'.format(X_test_gray))
-"""
 ###########################################
 # --- Extract a sample ---
 ###########################################
+
 training_sample_size = 10000
 X_train = X_train[0:training_sample_size]
 y_train = y_train[0:training_sample_size]
@@ -115,19 +68,80 @@ y_test  = y_test[0:training_sample_size/5]
 
 
 ###########################################
+# --- Convert color images into gray ones --- 
+###########################################
+print('Log: start training images conversion')
+timer.StartTime()
+
+print('Log: start input manipulation')
+print('Log: start training image conversion')
+timer.StartTime()
+
+img = Image.fromarray(X_train[0])
+img = img.convert('1')
+X_train_gray = numpy.array(img)
+X_train_gray = X_train_gray.reshape(1 , X_train_gray.shape[0], X_train_gray.shape[1])
+
+
+for imageIndex in range(1, training_sample_size): 
+	img = Image.fromarray(X_train[imageIndex])
+	img = img.convert('1')
+	img = numpy.array(img).reshape(1 , X_train_gray.shape[1], 	X_train_gray.shape[2])
+	X_train_gray = numpy.vstack([X_train_gray, img])
+
+print(X_train_gray.ndim)
+print(X_train_gray.shape[0])
+print(X_train_gray.shape[1])
+print(X_train_gray.shape[2])
+
+
+timer.EndTime()
+timer.DeltaTime() 
+print('Log: end training image conversion') 
+
+print('Log: start testing image conversion')
+
+timer.StartTime()
+
+img = Image.fromarray(X_test[0])
+img = img.convert('1')
+X_test_gray = numpy.array(img)
+X_test_gray = X_test_gray.reshape(1 , X_test_gray.shape[0], X_test_gray.shape[1])
+
+
+for imageIndex in range(1, training_sample_size/5): 
+	img = Image.fromarray(X_test[imageIndex])
+	img = img.convert('1')
+	img = numpy.array(img).reshape(1 , X_test_gray.shape[1], 	X_test_gray.shape[2])
+	X_test_gray = numpy.vstack([X_test_gray, img])
+
+print(X_test_gray.ndim)
+print(X_test_gray.shape[0])
+print(X_test_gray.shape[1])
+print(X_test_gray.shape[2])
+
+
+timer.EndTime()     
+timer.DeltaTime()
+print('Log: end testing image conversion')
+
+print('Log: end input manipulation')
+
+
+###########################################
 # --- Flatten Input ---
 ###########################################
-num_pixels = X_train.shape[1]*X_train.shape[2]*X_train.shape[3]
+num_pixels = X_train_gray.shape[1]*X_train_gray.shape[2]
 print ("num_pixels = {}".format(num_pixels))
-X_train = X_train.reshape(X_train.shape[0], num_pixels).astype('float32')
-X_test  = X_test.reshape(X_test.shape[0], num_pixels).astype('float32')
+X_train_gray = X_train_gray.reshape(X_train_gray.shape[0], num_pixels).astype('float32')
+X_test_gray  = X_test_gray.reshape(X_test_gray.shape[0], num_pixels).astype('float32')
 
 ###########################################
 # --- Normalization --- 
 ###########################################
 
-X_train = X_train/255 
-X_test  = X_test/255 
+X_train_gray = X_train_gray/255 
+X_test_gray  = X_test_gray/255 
 
 
 ###########################################
@@ -159,13 +173,13 @@ model = baseline_model()
 ###########################################
 # --- Fit the model ---
 ###########################################
-model.fit(X_train, y_train, validation_data=(X_test, y_test), nb_epoch=10, batch_size=200, verbose=2)
+model.fit(X_train_gray , y_train, validation_data=(X_test_gray, y_test), nb_epoch=10, batch_size=200, verbose=2)
 
 
 ###########################################
 # --- Final evaluation ---
 ###########################################
-scores = model.evaluate(X_test, y_test, verbose=0) 
+scores = model.evaluate(X_test_gray, y_test, verbose=0) 
 print('Log: score = {} %'.format(scores))
 
 
