@@ -115,15 +115,18 @@ model = KerasClassifier(build_fn=baseline_model, verbose=0)
 ###########################################
 # --- Grid search for values ---
 ###########################################
-optimizers = ['adam' , 'sgd']
-
+optimizers = ['adam' , 'sgd', 'rmsprop']
+init = ['glorot_uniform' , 'normal' , 'uniform']
+epochs = numpy.array([10 , 20 , 30])
+batches = numpy.array([5, 50 , 200, 300])
 
 ###########################################
 # --- Fit the model ---
 ###########################################
-model.fit(X_train, y_train, validation_data=(X_test, y_test), nb_epoch=5, batch_size=200, verbose=2)
+model.fit(X_train, y_train, validation_data=(X_test, y_test), nb_epoch=10, batch_size=200, verbose=2)
 
-param_grid = dict(optimizer = optimizers) 
+
+param_grid = dict(optimizer=optimizers, nb_epoch=epochs, batch_size=batches, init=init) 
 grid = GridSearchCV(estimator=model, param_grid=param_grid)
 grid_result = grid.fit(X_train, y_train)
 
