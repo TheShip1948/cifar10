@@ -30,6 +30,8 @@ import numpy
 from keras.models   import Sequential 
 from keras.layers   import Dense 
 
+from keras.wrappers.scikit_learn import KerasClassifier 
+from sklearn.model_selection import GridSearchCV 
 
 ###########################################
 # from skimage import color 
@@ -57,56 +59,9 @@ print('Log: end seed definition')
 
 
 ###########################################
-# --- Convert color images into gray ones --- 
-###########################################
-"""
-print('Log: start training images conversion')
-timer.StartTime()
-X_train_gray = numpy.ndarray(shape=(32, 32))
-# for imageIndex in range(0, X_train.shape[0]): 
-# TODO: handling the dimension of the numpy array is pretty bad, find a better solution 
-# TODO: numpy create an initial record, I need to remove it 
-# TODO: modify the sample size to 10000
-X_training_sample_size = 10
-for imageIndex in range(0, X_training_sample_size): 
-	img = Image.fromarray(X_train[imageIndex])
-	img = img.convert('1')
-	X_train_gray = numpy.dstack([X_train_gray, img])
-	print("Log: training image number = {}".format(imageIndex))
-X_train_gray = numpy.swapaxes(X_train_gray, 1, 2)
-X_train_gray = numpy.swapaxes(X_train_gray, 0, 1)
-timer.EndTime()
-timer.DeltaTime() 
-print('Log: end training image conversion') 
-
-print('Log: start testing image conversion')
-timer.StartTime()
-X_test_gray = numpy.ndarray(shape=(32, 32))
-#for imageIndex in range(0, X_test.shape[0]):
-# TODO: apply training modifications here
-# TODO: code is similar may need to put in a function 
-# TODO: the function may be generic enough to put outside the code 
-# TODO: think of a library of utilities to be on git-hub   
-for imageIndex in range(0, X_training_sample_size/5): 
-	img = Image.fromarray(X_test[imageIndex])
-	img = img.convert('1')
-	X_test_gray = numpy.dstack([X_test_gray, img])
-	print("Log: testing image number = {}".format(imageIndex))
-X_test_gray = numpy.swapaxes(X_test_gray, 1, 2)	
-X_test_gray = numpy.swapaxes(X_test_gray, 0, 1)
-timer.EndTime()     
-timer.DeltaTime()
-print('Log: end testing image conversion')
-
-print('Log: start input manipulation')
-timer.StartTime()
-
-print('Log: X_test_gray = {}'.format(X_test_gray))
-"""
-###########################################
 # --- Extract a sample ---
 ###########################################
-training_sample_size = 10000
+training_sample_size = 100
 X_train = X_train[0:training_sample_size]
 y_train = y_train[0:training_sample_size]
 
@@ -140,35 +95,45 @@ num_classes = y_test.shape[1]
 ###########################################
 # --- Define baseline model ---
 ###########################################
-def baseline_model(): 
+def baseline_model(optimizer='adam', init='normal'): 
 	# Create model 
 	model = Sequential()
-	model.add(Dense(num_pixels, input_dim=num_pixels, init='normal', activation='relu'))
-	model.add(Dense(num_classes, init='normal', activation='softmax'))
+	model.add(Dense(num_pixels, input_dim=num_pixels, init=init, activation='relu'))
+	model.add(Dense(num_classes, init=init, activation='softmax'))
 	# Compile model 
-	model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy']) 
+	model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy']) 
 	return model
 
 
 ###########################################
 # --- Build the model ---
 ###########################################
-model = baseline_model() 
+# model = baseline_model() 
+model = KerasClassifier(build_fn=baseline_model, verbose=0)
+
+
+###########################################
+# --- Grid search for values ---
+###########################################
+optimizers = ['adam' , 'sgd']
 
 
 ###########################################
 # --- Fit the model ---
 ###########################################
-model.fit(X_train, y_train, validation_data=(X_test, y_test), nb_epoch=10, batch_size=200, verbose=2)
+model.fit(X_train, y_train, validation_data=(X_test, y_test), nb_epoch=5, batch_size=200, verbose=2)
+
+param_grid = dict(optimizer = optimizers) 
+grid = GridSearchCV(estimator=model, param_grid=param_grid)
+grid_result = grid.fit(X_train, y_train)
 
 
 ###########################################
-# --- Final evaluation ---
+# --- Summarize results ---
 ###########################################
-scores = model.evaluate(X_test, y_test, verbose=0) 
-print('Log: score = {} %'.format(scores))
-
-
+print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+for params, mean_score, scores in grid_result.grid_scores_:
+	print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))
 
 
 
